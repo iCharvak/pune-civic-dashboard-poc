@@ -342,6 +342,16 @@
     padding:12px 16px;font-size:12px;color:var(--grey);
     margin-bottom:24px;line-height:1.5;
   }
+  .category-link{cursor:pointer;}
+  .category-link:hover{border-color:var(--seal);color:var(--ink);}
+  .feature-card{cursor:pointer;transition:transform .18s ease,border-color .18s ease,background .18s ease;}
+  .feature-card:hover{transform:translateY(-2px);border-color:var(--seal);background:var(--paper-3);}
+  .feature-card.active{border-color:var(--seal);box-shadow:inset 0 3px 0 var(--seal);}
+  .browse-note{
+    background:var(--paper-3);border-left:3px solid var(--seal);
+    padding:12px 16px;font-size:12px;color:var(--grey);margin:0 0 18px;
+  }
+
 
   @media(max-width:900px){
     .wrap{padding:0 20px;}
@@ -401,11 +411,11 @@
     </p>
 
     <div class="chips">
-      <span class="chip">रस्ते · Roads</span>
-      <span class="chip">पाणीपुरवठा · Water supply</span>
-      <span class="chip">ड्रेनेज · Drainage</span>
-      <span class="chip">उद्याने व क्रीडा · Parks & recreation</span>
-      <span class="chip">घनकचरा · Waste mgmt</span>
+      <button class="chip category-link" data-top-category="roads" type="button">रस्ते · Roads</button>
+      <button class="chip category-link" data-top-category="water" type="button">पाणीपुरवठा · Water supply</button>
+      <button class="chip category-link" data-top-category="drainage" type="button">ड्रेनेज · Drainage</button>
+      <button class="chip category-link" data-top-category="parks-recreation" type="button">उद्याने व क्रीडा · Parks & recreation</button>
+      <button class="chip category-link" data-top-category="waste" type="button">घनकचरा · Waste mgmt</button>
     </div>
 
     <div class="hero-cta">
@@ -493,6 +503,7 @@
     </div>
 
     <div class="feature-grid" id="categoryGrid"></div>
+    <div class="browse-note" id="categoryBrowseNote" hidden></div>
   </div>
 </section>
 
@@ -514,21 +525,7 @@
   </div>
 </section>
 
-<section class="section" style="padding-top:0;">
-  <div class="wrap">
-    <div class="flag-box">
-      <span class="flag-badge">PoC</span>
-      <div>
-        <h3>Built to make civic decisions easier to follow</h3>
-        <p>
-          The dashboard currently reads live data from Supabase. The next database
-          update will add bilingual civic-category tags and make the year/month
-          hierarchy available for each ward.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
+
 
 <footer id="sources">
   <div class="wrap">
@@ -573,6 +570,57 @@ const headers = {
   apikey: SUPABASE_ANON_KEY,
   Authorization: `Bearer ${SUPABASE_ANON_KEY}`
 };
+
+/*
+  WARD MASTER FALLBACK
+  The ward cards are structural navigation, so they should remain visible
+  even if a live Supabase request temporarily fails. Live counts,
+  corporators and agenda data are overlaid when available.
+*/
+const WARD_MASTER_FALLBACK = [
+  {ward_number:'1', ward_name:'Kalas-Dhanori-Lohegaon'},
+  {ward_number:'2', ward_name:'Phulenagar-Nagpur Chawl'},
+  {ward_number:'3', ward_name:'Vimannagar-Lohegaon'},
+  {ward_number:'4', ward_name:'Kharadi-Wagholi'},
+  {ward_number:'5', ward_name:'Kalyaninagar-Vadgaonsheri'},
+  {ward_number:'6', ward_name:'Yerawada-Gandhinagar'},
+  {ward_number:'7', ward_name:'Gokhalenagar-Wakdewadi'},
+  {ward_number:'8', ward_name:'Aundh-Bopodi'},
+  {ward_number:'9', ward_name:'Sus-Baner-Pashan'},
+  {ward_number:'10', ward_name:'Bavdhan-Bhusari Colony'},
+  {ward_number:'11', ward_name:'Rambaug-Shivteerthnagar'},
+  {ward_number:'12', ward_name:'Shivajinagar-Model Colony'},
+  {ward_number:'13', ward_name:'Pune Station-Jay Jawannagar'},
+  {ward_number:'14', ward_name:'Koregaon Park-Mundhwa'},
+  {ward_number:'15', ward_name:'Manjari-Keshavnagar'},
+  {ward_number:'16', ward_name:'Hadapsar-Satavwadi'},
+  {ward_number:'17', ward_name:'Ramtekdi-Malwadi'},
+  {ward_number:'18', ward_name:'Wanowrie-Salunke Vihar'},
+  {ward_number:'19', ward_name:'Kondhwa Khurd-Kausar Baug'},
+  {ward_number:'20', ward_name:'Shankar Maharaj-Bibwewadi'},
+  {ward_number:'21', ward_name:'Mukundnagar-Salisbury Park'},
+  {ward_number:'22', ward_name:'Kashewadi-Dias Plot'},
+  {ward_number:'23', ward_name:'Raviwar Peth-Nana Peth'},
+  {ward_number:'24', ward_name:'Kasba Ganpati-K.E.M. Hospital'},
+  {ward_number:'25', ward_name:'Shaniwar Peth-Mandai'},
+  {ward_number:'26', ward_name:'Ghorpade Peth-Samatabhumi'},
+  {ward_number:'27', ward_name:'Navi Peth-Parvati'},
+  {ward_number:'28', ward_name:'Janta Vasahat-Hingne Khurd'},
+  {ward_number:'29', ward_name:'Deccan Gymkhana-Happy Colony'},
+  {ward_number:'30', ward_name:'Karvenagar-Hingne Home Colony'},
+  {ward_number:'31', ward_name:'Mayur Colony-Kothrud'},
+  {ward_number:'32', ward_name:'Warje-Popular Nagar'},
+  {ward_number:'33', ward_name:'Shivane-Khadakwasla-Dhayari'},
+  {ward_number:'34', ward_name:'Narhe-Vadgaon Budruk-Dhayari'},
+  {ward_number:'35', ward_name:'Sun City-Manik Bagh'},
+  {ward_number:'36', ward_name:'Sahakarnagar-Padmavati'},
+  {ward_number:'37', ward_name:'Dhankawadi-Katrej Deori'},
+  {ward_number:'38', ward_name:'Balajinagar-Ambegaon-Katraj'},
+  {ward_number:'39', ward_name:'Upper Super-Indiranagar'},
+  {ward_number:'40', ward_name:'Kondhwa Budruk-Yewalewadi'},
+  {ward_number:'41', ward_name:'Mohamadwadi-Undri'}
+];
+
 
 /*
   DATABASE TAGGING CONTRACT — ready for the next DB update
@@ -621,6 +669,7 @@ let items = [];
 let wardsByKey = {};
 let activeWard = null;
 let activeCategory = "all";
+let topCategory = null;
 
 const grid = document.getElementById("wardGrid");
 const statusNote = document.getElementById("statusNote");
@@ -756,13 +805,23 @@ function wardParty(w) {
 function renderWardGrid() {
   grid.innerHTML = "";
 
-  const allWardKeys = Object.keys(wardsByKey).sort((a,b) =>
+  let allWardKeys = Object.keys(wardsByKey).sort((a,b) =>
     a.localeCompare(b, undefined, {numeric:true})
   );
 
+  if (topCategory) {
+    allWardKeys = allWardKeys.filter(key =>
+      wardsByKey[key].items.some(it => categoryFor(it).key === topCategory)
+    );
+  }
+
   allWardKeys.forEach(key => {
     const w = wardsByKey[key];
-    const hasItems = w.items.length > 0;
+    const categoryItems = topCategory
+      ? w.items.filter(it => categoryFor(it).key === topCategory)
+      : w.items;
+
+    const hasItems = categoryItems.length > 0;
     const party = wardParty(w);
 
     const div = document.createElement("div");
@@ -771,8 +830,8 @@ function renderWardGrid() {
 
     div.innerHTML = `
       <div class="ward-stamp">
-        <span class="cnt">${w.items.length}</span>
-        <span class="lbl">items</span>
+        <span class="cnt">${categoryItems.length}</span>
+        <span class="lbl">${topCategory ? "category items" : "items"}</span>
       </div>
       <div class="ward-num">${esc(displayWardNumber(key))}</div>
       <div class="ward-name">${esc(w.name)}</div>
@@ -780,13 +839,38 @@ function renderWardGrid() {
         <span>${esc(wardMemberText(w))}</span>
         ${party ? `<span class="party-tag ${partyClass(party)}">${esc(party)}</span>` : ""}
       </div>
+      ${topCategory ? `<div class="tap-hint">View ${esc(categoryFor({category_en: CATEGORY_DEFS.find(c=>c.key===topCategory)?.en || ""}).en)} →</div>` : ""}
     `;
 
-    div.addEventListener("click", () => openWard(key));
+    div.addEventListener("click", () => openWard(key, topCategory || "all"));
     grid.appendChild(div);
   });
-}
 
+  const browseNote = document.getElementById("categoryBrowseNote");
+  if (topCategory) {
+    const c = CATEGORY_DEFS.find(c => c.key === topCategory);
+    const count = items.filter(i => i.ward_no && categoryFor(i).key === topCategory).length;
+    browseNote.hidden = false;
+    browseNote.innerHTML = `
+      <b>${esc(c?.en || topCategory)}</b>
+      <span class="mr"> · ${esc(c?.mr || "")}</span>
+      — showing ${count} ward-linked decision${count === 1 ? "" : "s"} across
+      ${allWardKeys.length} ward${allWardKeys.length === 1 ? "" : "s"}.
+      <button type="button" id="clearCategoryBrowse" style="margin-left:12px;background:none;border:0;text-decoration:underline;cursor:pointer;font:inherit;color:var(--seal);">Show all wards</button>
+    `;
+    document.getElementById("clearCategoryBrowse").addEventListener("click", clearTopCategory);
+  } else {
+    browseNote.hidden = true;
+    browseNote.innerHTML = "";
+  }
+
+  document.querySelectorAll("[data-top-category]").forEach(el => {
+    el.classList.toggle("active", el.dataset.topCategory === topCategory);
+  });
+  document.querySelectorAll(".feature-card").forEach(el => {
+    el.classList.toggle("active", el.dataset.categoryKey === topCategory);
+  });
+}
 function renderStats() {
   document.getElementById("statWards").textContent = wards.length || "41";
   document.getElementById("statItems").textContent = items.length;
@@ -801,15 +885,29 @@ function renderStats() {
 
 function renderCategoryGrid() {
   const grid = document.getElementById("categoryGrid");
-  grid.innerHTML = CATEGORY_DEFS.map((c,i) => `
-    <div class="feature-card">
-      <div class="feature-num">${String(i+1).padStart(2,"0")} — Subject</div>
-      <h3>${esc(c.en)}<span class="mr">${esc(c.mr)}</span></h3>
-      <p>Decisions tagged under ${esc(c.en.toLowerCase())} will appear here when browsing a ward.</p>
-    </div>
-  `).join("");
-}
+  grid.innerHTML = CATEGORY_DEFS.map((c,i) => {
+    const count = items.filter(it => it.ward_no && categoryFor(it).key === c.key).length;
+    return `
+      <div class="feature-card" data-category-key="${esc(c.key)}" role="button" tabindex="0"
+           aria-label="Browse ${esc(c.en)}">
+        <div class="feature-num">${String(i+1).padStart(2,"0")} — Subject</div>
+        <h3>${esc(c.en)}<span class="mr">${esc(c.mr)}</span></h3>
+        <p>${count} ward-linked decision${count === 1 ? "" : "s"} in the current dataset.</p>
+      </div>
+    `;
+  }).join("");
 
+  grid.querySelectorAll(".feature-card").forEach(card => {
+    const activate = () => browseCategory(card.dataset.categoryKey);
+    card.addEventListener("click", activate);
+    card.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        activate();
+      }
+    });
+  });
+}
 function populateYears(wardItems) {
   const years = [...new Set(wardItems.map(yearOf).filter(Boolean))].sort((a,b) => b.localeCompare(a));
   yearFilter.innerHTML = `<option value="all">All years · सर्व वर्षे</option>` +
@@ -865,9 +963,22 @@ function populateCategories(wardItems) {
   });
 }
 
-function openWard(key) {
-  activeWard = key;
+function browseCategory(key) {
+  topCategory = key;
+  activeCategory = key;
+  renderWardGrid();
+  document.getElementById("wards").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function clearTopCategory() {
+  topCategory = null;
   activeCategory = "all";
+  renderWardGrid();
+}
+
+function openWard(key, requestedCategory = null) {
+  activeWard = key;
+  activeCategory = requestedCategory || "all";
 
   document.querySelectorAll(".ward-card").forEach(el => el.classList.remove("active"));
   const card = document.getElementById("card-" + key);
@@ -884,7 +995,11 @@ function openWard(key) {
   populateMonths(w.items, "all");
   monthFilter.value = "all";
   populateCategories(w.items);
-  categoryFilter.value = "all";
+  categoryFilter.value = activeCategory;
+  if (activeCategory !== "all" && !w.items.some(i => categoryFor(i).key === activeCategory)) {
+    activeCategory = "all";
+    categoryFilter.value = "all";
+  }
 
   updateDetail();
 
@@ -965,15 +1080,37 @@ function updateDetail() {
 function renderRecentFeed() {
   const feed = document.getElementById("recentFeed");
 
-  const recent = items
+  const liveRecent = items
     .filter(i => i.ward_no)
     .sort((a,b) => String(b.meeting_date || "").localeCompare(String(a.meeting_date || "")))
-    .slice(0,6);
+    .slice(0,3);
 
-  if (!recent.length) {
-    feed.innerHTML = `<div class="status-note">No ward-linked recent decisions are available.</div>`;
-    return;
-  }
+  // Demo fallback uses three real ward-linked records from the supplied agenda CSV.
+  const demoRecent = [
+    {
+      subject_no:"Vishay-427", ward_no:"32B", meeting_date:"2026-07-16",
+      mover:"Bharatbhushan Barate; Sayali Wanjale",
+      description:"Reclassify funds from library/study-center work to two new works (box cricket/football court, wrestling complex materials)",
+      category_en:"Parks & recreation", category_mr:"उद्याने व क्रीडा सुविधा",
+      status_note:"Recorded"
+    },
+    {
+      subject_no:"Vishay-428", ward_no:"32B", meeting_date:"2026-07-16",
+      mover:"Bharatbhushan Barate; Sayali Wanjale",
+      description:"Reclassify drainage-line-laying provision into 5 new drainage repair/maintenance works across Warje localities",
+      category_en:"Drainage", category_mr:"ड्रेनेज",
+      status_note:"Recorded"
+    },
+    {
+      subject_no:"Vishay-433", ward_no:"38E", meeting_date:"2026-07-16",
+      mover:"Venkoji Khopade; Sandeep Belhekar",
+      description:"Reclassify smashan bhoomi (cremation ground) development provision into 3 new road-development works",
+      category_en:"Roads", category_mr:"रस्ते",
+      status_note:"Recorded"
+    }
+  ];
+
+  const recent = liveRecent.length ? liveRecent : demoRecent;
 
   feed.innerHTML = recent.map(it => {
     const c = categoryFor(it);
@@ -981,9 +1118,9 @@ function renderRecentFeed() {
       <div class="feed-item">
         <div class="feed-code">${esc(it.subject_no || "—")}</div>
         <div class="feed-desc">
-          <span class="ward-tag">${esc(it.ward_no)}</span>
+          <span class="ward-tag">${esc(displayWardNumber(it.ward_no || "—"))}</span>
           ${esc(it.description || "(no description captured)")}
-          <span class="feed-category">${esc(c.en)}</span>
+          <span class="feed-category">${esc(c.en)}${c.mr ? ` · ${esc(c.mr)}` : ""}</span>
           <div class="feed-meta">
             ${esc(it.mover || it.section || "Standing Committee")}
             ${it.meeting_date ? " · " + esc(formatDate(it.meeting_date)) : ""}
@@ -994,7 +1131,6 @@ function renderRecentFeed() {
     `;
   }).join("");
 }
-
 async function fetchTable(table, query) {
   const response = await fetch(
     `${SUPABASE_URL}/rest/v1/${table}?${query}`,
@@ -1006,31 +1142,64 @@ async function fetchTable(table, query) {
   return response.json();
 }
 
+document.querySelectorAll("[data-top-category]").forEach(el => {
+  el.addEventListener("click", () => browseCategory(el.dataset.topCategory));
+});
+
 async function loadData() {
-  try {
-    const [wardRows, corporatorRows, itemRows] = await Promise.all([
-      fetchTable("wards", "select=*"),
-      fetchTable("corporators", "select=*"),
-      fetchTable("agenda_items", "select=*")
-    ]);
+  // Render the ward navigation immediately from the master list.
+  // This keeps the core UI visible even before live data arrives.
+  wards = WARD_MASTER_FALLBACK.slice();
+  corporators = [];
+  items = [];
+  buildWardModel();
+  renderStats();
+  renderWardGrid();
+  renderCategoryGrid();
+  renderRecentFeed();
 
-    wards = wardRows;
-    corporators = corporatorRows;
-    items = itemRows;
+  const results = await Promise.allSettled([
+    fetchTable("wards", "select=*"),
+    fetchTable("corporators", "select=*"),
+    fetchTable("agenda_items", "select=*")
+  ]);
 
-    buildWardModel();
-    renderStats();
-    renderWardGrid();
-    renderCategoryGrid();
-    renderRecentFeed();
+  const [wardResult, corporatorResult, itemResult] = results;
 
-    const linkedItems = items.filter(i => i.ward_no).length;
+  if (wardResult.status === "fulfilled") {
+    wards = wardResult.value;
+  } else {
+    console.warn("wards table unavailable; using ward master fallback", wardResult.reason);
+  }
+
+  if (corporatorResult.status === "fulfilled") {
+    corporators = corporatorResult.value;
+  } else {
+    console.warn("corporators table unavailable", corporatorResult.reason);
+  }
+
+  if (itemResult.status === "fulfilled") {
+    items = itemResult.value;
+  } else {
+    console.warn("agenda_items table unavailable", itemResult.reason);
+  }
+
+  buildWardModel();
+  renderStats();
+  renderWardGrid();
+  renderCategoryGrid();
+  renderRecentFeed();
+
+  const failed = results.filter(r => r.status === "rejected").length;
+  const linkedItems = items.filter(i => i.ward_no).length;
+
+  if (failed === 0) {
     statusNote.textContent =
       `Live from Supabase: ${items.length} agenda items loaded; ${linkedItems} currently linked to a ward.`;
-
-  } catch (err) {
-    console.error(err);
-    statusNote.textContent = "Could not load from Supabase: " + err.message;
+    statusNote.style.borderLeftColor = "var(--sage)";
+  } else {
+    statusNote.textContent =
+      `Ward list loaded. Some live Supabase data could not be fetched (${failed} request${failed === 1 ? "" : "s"} failed).`;
     statusNote.style.borderLeftColor = "var(--seal)";
   }
 }
